@@ -77,6 +77,15 @@ ${LIBS}
 )
 
 
+# Node for monocular camera
+rosbuild_add_executable(Mono_ZED
+src/ros_mono_zed.cc
+)
+target_link_libraries(Mono_ZED
+${LIBS}
+)
+
+
 # Node for monocular camera (Augmented Reality Demo)
 rosbuild_add_executable(MonoAR
 src/AR/ros_mono_ar.cc
