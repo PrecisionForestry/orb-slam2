@@ -79,7 +79,7 @@ ${LIBS}
 
 # Node for monocular camera
 rosbuild_add_executable(Mono_ZED
-src/ros_mono_zed.cc
+src/ros_mono_zed_video.cc
 )
 target_link_libraries(Mono_ZED
 ${LIBS}
