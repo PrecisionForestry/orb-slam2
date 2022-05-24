@@ -74,12 +74,6 @@ nav_msgs::Odometry create_odometry_message(tf::Transform& transform, ros::Time& 
 	msg_odom.pose.pose.orientation.z = transform.getRotation().z();
 	msg_odom.pose.pose.orientation.w = transform.getRotation().w();
 
-	/*msg_odom.pose.covariance[0] = std::pow(ins_data->PosUncertainty,2.0);
-	msg_odom.pose.covariance[7] = std::pow(ins_data->PosUncertainty,2.0);
-	msg_odom.pose.covariance[14] = std::pow(ins_data->PosUncertainty,2.0);
-	msg_odom.pose.covariance[21] = std::pow(ins_data->RollUncertainty,2.0);
-	msg_odom.pose.covariance[28] = std::pow(ins_data->PitchUncertainty,2.0);
-	msg_odom.pose.covariance[35] = std::pow(ins_data->YawUncertainty,2.0);*/
 	return msg_odom;
 }
 
@@ -163,8 +157,8 @@ int main(int argc, char **argv)
 	bool publish=true;
 	tf::Transform pose_previous;
 	pose_previous.setOrigin( tf::Vector3(0.0, 0.0, 0.0));
-    	tf::Quaternion q(0.0, 0.0, 0.0, 1.0);
-    	pose_previous.setRotation(q);
+    tf::Quaternion q(0.0, 0.0, 0.0, 1.0);
+    pose_previous.setRotation(q);
 	nav_msgs::Odometry odometry_msg;
 	//start tracking
 	if(publish){
@@ -208,9 +202,7 @@ int main(int argc, char **argv)
 
 		}
 	}
-	else{
-		//ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
-	}
+
 
     //ros::spin();
 	bag.close();
@@ -242,7 +234,6 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         return;
     }
 
-    //mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
     cv::Mat Tcw = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec()).clone();
     if(Tcw.empty())
         return;
@@ -260,17 +251,12 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 
 tf::Transform ImageGrabber::GrabImage(cv::Mat& frame, tf::Transform& pose_previous, double& time_Stamp)
 {
-    //save old pose
-    //pose_previous = pose;
 
     //slam frame
     cv::Mat Tcw = mpSLAM->TrackMonocular(frame, time_Stamp).clone();
     if(Tcw.empty())
         return pose_previous;
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
-
-	//ROS_INFO_STREAM(Tcw);
-	//ROS_INFO_STREAM(mpSLAM->mpTracker->mCurrentFrame.mTcw);
 
     // Create tf transform
     tf::Transform transform;
