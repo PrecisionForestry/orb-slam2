@@ -91,6 +91,28 @@ bool to_bool(std::string str) {
     return b;
 }
 
+enum eTrackingState{
+    SYSTEM_NOT_READY=-1,
+    NO_IMAGES_YET=0,
+    NOT_INITIALIZED=1,
+    OK=2,
+    LOST=3
+};
+
+std::ostream& operator<<(std::ostream& out, const eTrackingState value){
+    const char* s = 0;
+#define PROCESS_VAL(p) case(p): s = #p; break;
+    switch(value){
+        PROCESS_VAL(SYSTEM_NOT_READY);
+        PROCESS_VAL(NO_IMAGES_YET);
+        PROCESS_VAL(NOT_INITIALIZED);
+        PROCESS_VAL(OK);
+        PROCESS_VAL(LOST);
+    }
+#undef PROCESS_VAL
+    return out << s;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono");
@@ -98,7 +120,7 @@ int main(int argc, char **argv)
 
     if(argc != 4)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings slam_config_file_path" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM2 Mono2 path_to_vocabulary path_to_settings slam_config_file_path" << endl;
         ros::shutdown();
         return 1;
     }    
@@ -121,12 +143,19 @@ int main(int argc, char **argv)
 	int start_video_idx = std::stoi(line);
 	std::getline(file, line);
 	int end_video_idx = std::stoi(line);
-	//ROS_INFO_STREAM(line);
-
+	std::getline(file, line);
+	int try_initialization_max_frames = std::stoi(line);
+	std::getline(file, line);
+	int tracking_lost_max_frames = std::stoi(line);
+	std::getline(file, line);
+	int tracking_lost_max_consecutive_frames = std::stoi(line);
+	
+	
 	// Create SLAM system. It initializes all system threads and gets ready to process frames.
 	ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,PLOT);
 
 	ImageGrabber igb(&SLAM);
+	ROS_INFO("ORB Slam 2 created");
 	//ros::NodeHandle nodeHandler;
 
 	//open video
@@ -147,13 +176,10 @@ int main(int argc, char **argv)
 		frame_idx=start_video_idx;
 	}
 	double frame_time = first_time_stamp + double(frame_idx)*frame_duration;
+    ROS_INFO_STREAM("ORB Slam starting frame: "<<frame_idx << " subsequent frame indices are relative to this");
 
-	//read calibration
-	/*cv::FileStorage fs("/home/silvere/Downloads/000-000-viljandi/0012/out_camera_params.xml", cv::FileStorage::READ);
-	cv::Mat K, xi, D;
-	fs["camera_matrix"] >> K;
-	fs["distortion_coefficients"] >> D;
-	fs["xi"] >> xi;*/
+    eTrackingState previous_tracking_state = static_cast<eTrackingState>(igb.mpSLAM->GetTrackingState());
+    ROS_INFO_STREAM("ORB Slam state: "<<previous_tracking_state);
 	
 	//open ros bag
 	rosbag::Bag bag;
@@ -166,6 +192,11 @@ int main(int argc, char **argv)
     	tf::Quaternion q(0.0, 0.0, 0.0, 1.0);
     	pose_previous.setRotation(q);
 	nav_msgs::Odometry odometry_msg;
+
+	int nb_tracking_failed_frames = 0;
+	int nb_consecutive_tracking_failed_frames = 0;
+	int nb_consecutive_tracking_failed_frames_max = 0;
+	int return_code = 0;
 	//start tracking
 	if(publish){
 		//ros::Publisher slam_pub = n.advertise<tf::Transform>("mono", 1000);
@@ -183,6 +214,50 @@ int main(int argc, char **argv)
 			}
 			//track slam
 			tf::Transform pose = igb.GrabImage(frame, pose_previous, frame_time);
+            eTrackingState current_tracking_status = static_cast<eTrackingState>(igb.mpSLAM->GetTrackingState());
+            if (current_tracking_status != previous_tracking_state) {
+                ROS_INFO_STREAM("ORB Slam state: "<<current_tracking_status << ", frame: "<<(frame_idx-start_video_idx));
+            }
+            if ((frame_idx-start_video_idx)%5000==0) {
+                ROS_INFO_STREAM("ORB Slam state: "<<current_tracking_status << ", frame: "<<(frame_idx-start_video_idx));
+            }
+			if (current_tracking_status == OK && previous_tracking_state == NOT_INITIALIZED) {
+				ROS_INFO_STREAM("ORB Slam successfully initialized on frame: "<< (frame_idx-start_video_idx));
+            }
+			if (current_tracking_status < OK && ((frame_idx-start_video_idx)%100==0)) {
+				ROS_INFO_STREAM("Trying to initialize Slam... frame: "<< (frame_idx-start_video_idx));
+			}
+			if (current_tracking_status == LOST) {
+				++nb_tracking_failed_frames;
+				++nb_consecutive_tracking_failed_frames;		
+			}
+			else {
+				if (nb_consecutive_tracking_failed_frames > nb_consecutive_tracking_failed_frames_max) {
+					nb_consecutive_tracking_failed_frames_max = nb_consecutive_tracking_failed_frames;
+				}
+				nb_consecutive_tracking_failed_frames = 0;
+			}
+			if (current_tracking_status < OK && previous_tracking_state < OK && ((frame_idx-start_video_idx)>try_initialization_max_frames)) {
+				ROS_ERROR_STREAM("Initialization failed after trying for "<<try_initialization_max_frames<<" frames, exiting... (frame: "<< (frame_idx-start_video_idx)<<")");
+				bag.close();
+    			// Stop all threads
+			    SLAM.Shutdown();
+			    ros::shutdown();
+				return 50;
+			}
+			if (nb_tracking_failed_frames > tracking_lost_max_frames) {
+				ROS_ERROR_STREAM("Tracking lost for more than " << tracking_lost_max_frames << " frames, exiting... (frame: "<< (frame_idx-start_video_idx)<<")");
+
+				return_code = 51;
+				break;
+			}
+			if (nb_consecutive_tracking_failed_frames > tracking_lost_max_consecutive_frames) {
+				ROS_ERROR_STREAM("Tracking lost for more than " << tracking_lost_max_consecutive_frames << " consecutive frames, exiting... (frame: "<< (frame_idx-start_video_idx)<<")");
+				return_code = 52;
+				break;
+			}
+
+            previous_tracking_state = current_tracking_status;
 			//create odometry message from pose and time stamp
 			ros::Time time_stamp(frame_time);
 			odometry_msg = create_odometry_message(pose, time_stamp);
@@ -199,7 +274,13 @@ int main(int argc, char **argv)
 	else{
 		//ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
 	}
-
+	ROS_INFO("ORB Slam finished");
+	if (nb_tracking_failed_frames > 0) {
+		ROS_INFO_STREAM("Lost tracking for total of " << nb_tracking_failed_frames << " frames");
+	}
+	if (nb_consecutive_tracking_failed_frames_max > 0) {
+		ROS_INFO_STREAM("Lost tracking for maximum of " << nb_consecutive_tracking_failed_frames_max << " consecutive frames");
+	}
     //ros::spin();
 	bag.close();
     // Stop all threads
@@ -211,12 +292,9 @@ int main(int argc, char **argv)
     ROS_INFO("Saving keyframe trajectory.");
     SLAM.SaveKeyFrameTrajectoryTUM(data_folder_path + "/KeyFrameTrajectory.txt");
     
-    //SLAM.SaveTrajectoryTUM2(data_folder_path + "FrameTrajectory2.txt");
-    //SLAM.SaveTrajectoryKITTI(data_folder_path + "FrameTrajectoryKITTI.txt");
-
     ros::shutdown();
 
-    return 0;
+    return return_code;
 }
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
