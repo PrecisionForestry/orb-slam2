@@ -2,7 +2,7 @@
 SHELL=/bin/bash
 
 build:
-	source /opt/ros/melodic/setup.bash
+	source /opt/ros/noetic/setup.bash
 	echo $(ROS_PACKAGE_PATH)
 	echo $(PYTHONPATH)
 	cd ../ORB_SLAM2

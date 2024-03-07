@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 		throw std::invalid_argument( "Error when reading video" );
 
 	//set frame to start_video_idx
-	bool success = capture.set(CV_CAP_PROP_POS_FRAMES, start_video_idx);
+	bool success = capture.set(CAP_PROP_POS_FRAMES, start_video_idx);
 	if (!success){
 		for(int i=0; i<start_video_idx; i++){
 			capture >> frame;
