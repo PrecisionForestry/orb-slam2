@@ -23,7 +23,9 @@
 
 #include <vector>
 #include <list>
-#include <opencv/cv.h>
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/opencv.hpp>
+using namespace cv;
 
 
 namespace ORB_SLAM2
