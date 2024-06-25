@@ -160,37 +160,24 @@ int main(int argc, char **argv)
 	std::getline(file, camera_model);
 
 	std::vector<double> frame_timestamps;
-	if (camera_model == "sony")
-	{
-		int timestamp_index = 0;
-		double current_timestamp = first_time_stamp;
-		while (timestamp_index <= end_video_idx)
-		{
-			frame_timestamps.push_back(current_timestamp);
-			current_timestamp += frame_duration;
-		}
-	}
-	else
-	{
-		// split camera id from camera model
-		std::stringstream camera_model_stream(camera_model);
-		std::string segment;
-		std::vector<std::string> segment_list;
 
-		while (std::getline(camera_model_stream, segment, '_'))
-		{
-			segment_list.push_back(segment);
-		}
-		std::string camera_id = segment_list.back();
-		std::string timestamp_path = data_folder_path + "/timestamps_" + camera_id + ".txt";
-		std::fstream timestamps_file(timestamp_path);
-
-		std::string timestamp_line;
-		while (std::getline(timestamps_file, timestamp_line))
-		{
-			frame_timestamps.push_back(std::stod(timestamp_line));
-		}
+	// split camera id from camera model
+	std::stringstream camera_model_stream(camera_model);
+	std::string segment;
+	std::vector<std::string> segment_list;
+	while (std::getline(camera_model_stream, segment, '_'))
+	{
+		segment_list.push_back(segment);
 	}
+	std::string camera_id = segment_list.back();
+	std::string timestamp_path = data_folder_path + "/timestamps_" + camera_id + ".txt";
+	std::fstream timestamps_file(timestamp_path);
+	std::string timestamp_line;
+	while (std::getline(timestamps_file, timestamp_line))
+	{
+		frame_timestamps.push_back(std::stod(timestamp_line));
+	}
+	
 
 	// Create SLAM system. It initializes all system threads and gets ready to process frames.
 	ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, PLOT);
