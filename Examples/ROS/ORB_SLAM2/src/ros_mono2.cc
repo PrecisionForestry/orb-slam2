@@ -168,6 +168,7 @@ int main(int argc, char **argv)
 		{
 			frame_timestamps.push_back(current_timestamp);
 			current_timestamp += frame_duration;
+			timestamp_index++;
 		}
 	}
 	else
