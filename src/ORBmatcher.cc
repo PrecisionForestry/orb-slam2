@@ -36,7 +36,7 @@ namespace ORB_SLAM2
 
 const int ORBmatcher::TH_HIGH = 100;
 const int ORBmatcher::TH_LOW = 50;
-const int ORBmatcher::HISTO_LENGTH = 30;
+const int ORBmatcher::HISTO_LENGTH = 50;
 
 ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
@@ -475,7 +475,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
                     float rot = F1.mvKeysUn[i1].angle-F2.mvKeysUn[bestIdx2].angle;
                     if(rot<0.0)
                         rot+=360.0f;
-                    int bin = round(rot*factor);
+                    int bin = round(rot/(360.0f*factor));
                     if(bin==HISTO_LENGTH)
                         bin=0;
                     assert(bin>=0 && bin<HISTO_LENGTH);
@@ -759,6 +759,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
                 {
                     const cv::KeyPoint &kp2 = pKF2->mvKeysUn[bestIdx2];
                     vMatches12[idx1]=bestIdx2;
+                    vbMatched2[bestIdx2] = true;
                     nmatches++;
 
                     if(mbCheckOrientation)
@@ -802,6 +803,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
                 continue;
             for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
             {
+                vbMatched2[vMatches12[rotHist[i][j]]] = false;
                 vMatches12[rotHist[i][j]]=-1;
                 nmatches--;
             }

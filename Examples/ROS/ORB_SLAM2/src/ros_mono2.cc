@@ -260,6 +260,11 @@ int main(int argc, char **argv)
 			// track slam
 			tf::Transform pose = igb.GrabImage(frame, pose_previous, frame_time);
 			eTrackingState current_tracking_status = static_cast<eTrackingState>(igb.mpSLAM->GetTrackingState());
+			// Skipping every second frame to get more parallax
+			// if (frame_idx % 2 == 0 && current_tracking_status == NOT_INITIALIZED)
+			// {
+			//     continue;
+			// }
 			if (current_tracking_status != previous_tracking_state)
 			{
 				ROS_INFO_STREAM("ORB Slam state: " << current_tracking_status << ", frame: " << (frame_idx - start_video_idx));
