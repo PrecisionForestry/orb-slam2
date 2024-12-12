@@ -112,10 +112,14 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     float RH = SH/(SH+SF);
 
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
-    if(RH>0.40)
+    if(RH>0.4)
+    {
         return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
+    }
     else //if(pF_HF>0.6)
+    {
         return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
+    }
 
     return false;
 }
@@ -516,6 +520,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // If there is not a clear winner or not enough triangulated points reject initialization
     if(maxGood<nMinGood || nsimilar>1)
     {
+        cout << "maxGood<nMinGood or nsimilar>1, reject initialization" << endl;
         return false;
     }
 
@@ -565,7 +570,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             return true;
         }
     }
-
+    cout << "Not enough parallax for initialization..." << endl;
     return false;
 }
 
@@ -887,10 +892,14 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
 
         vCosParallax.push_back(cosParallax);
         vP3D[vMatches12[i].first] = cv::Point3f(p3dC1.at<float>(0),p3dC1.at<float>(1),p3dC1.at<float>(2));
-        nGood++;
+        // This is reported to be bug, and is moved inside the next statement
+        // nGood++;
 
-        if(cosParallax<0.99998)
-            vbGood[vMatches12[i].first]=true;
+        if(cosParallax<0.99998) {
+          vbGood[vMatches12[i].first]=true;
+          nGood++;
+        }
+
     }
 
     if(nGood>0)
