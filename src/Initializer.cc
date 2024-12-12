@@ -110,17 +110,14 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
 
     // Compute ratio of scores
     float RH = SH/(SH+SF);
-    cout << "RH (ratio of scores): " << RH << endl;
 
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
     if(RH>0.4)
     {
-        cout << "Trying initialization with Homography..." << endl;
         return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
     }
     else //if(pF_HF>0.6)
     {
-        cout << "Trying initialization with Fundamental..." << endl;
         return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
     }
 
@@ -896,11 +893,11 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
         vCosParallax.push_back(cosParallax);
         vP3D[vMatches12[i].first] = cv::Point3f(p3dC1.at<float>(0),p3dC1.at<float>(1),p3dC1.at<float>(2));
         // This is reported to be bug, and is moved inside the next statement
-        nGood++;
+        // nGood++;
 
         if(cosParallax<0.99998) {
           vbGood[vMatches12[i].first]=true;
-          // nGood++;
+          nGood++;
         }
 
     }
