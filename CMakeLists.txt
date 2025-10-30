@@ -5,6 +5,10 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+# Maximize optimization for speed                                │
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -funroll-loops")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -march=native -ffast-math -funroll-loops")
+
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
@@ -40,6 +44,7 @@ find_package(OpenCV REQUIRED QUIET)
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
+find_package(OpenMP REQUIRED)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -78,6 +83,8 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+${OpenMP_CXX_FLAGS}
+${OpenMP_CXX_LIBRARIES}
 )
 
 # Build examples

@@ -61,6 +61,7 @@
 #include <vector>
 
 #include "ORBextractor.h"
+#include <omp.h>
 
 
 using namespace cv;
@@ -768,6 +769,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 
     const float W = 30;
 
+    #pragma omp parallel for schedule(dynamic)
     for (int level = 0; level < nlevels; ++level)
     {
         const int minBorderX = EDGE_THRESHOLD-3;
@@ -1036,6 +1038,7 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
 {
     descriptors = Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
 
+    #pragma omp parallel for
     for (size_t i = 0; i < keypoints.size(); i++)
         computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
 }
