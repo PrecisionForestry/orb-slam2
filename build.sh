@@ -29,9 +29,12 @@ make -j${NUM_CORES}
 cd ../../../
 echo "Uncompress vocabulary ..."
 cd Vocabulary
+# Change vocabulary to ORBvoc.txt.tar.gz, in case the newly trained ORBvoc.UAV.txt.tar.gz do not work!!!!!!!!!
 if [ ! -f ORBvoc.txt ]; then
-    tar -xf ORBvoc.txt.tar.gz
+    tar -xf ORBvoc.UAV.txt.tar.gz
+    mv ORBvoc.UAV.txt ORBvoc.txt
 fi
+
 
 cd ..
 echo "Configuring and building ORB_SLAM2 ..."
