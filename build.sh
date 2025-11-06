@@ -32,7 +32,6 @@ cd Vocabulary
 # Change vocabulary to ORBvoc.txt.tar.gz, in case the newly trained ORBvoc.UAV.txt.tar.gz do not work!!!!!!!!!
 if [ ! -f ORBvoc.txt ]; then
     tar -xf ORBvoc.UAV.txt.tar.gz
-    mv ORBvoc.UAV.txt ORBvoc.txt
 fi
 
 
