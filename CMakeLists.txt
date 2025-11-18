@@ -36,6 +36,11 @@ find_package(OpenCV REQUIRED QUIET)
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(OpenMP REQUIRED)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found: ${OpenMP_CXX_FLAGS} ${OpenMP_CXX_LIBRARIES}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+endif()
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -69,11 +74,10 @@ src/Viewer.cc
 )
 
 target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-${OpenMP_CXX_FLAGS}
-${OpenMP_CXX_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${EIGEN3_LIBS}
+    ${Pangolin_LIBRARIES}
+    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+    ${OpenMP_CXX_LIBRARIES}
 )
