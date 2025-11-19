@@ -84,7 +84,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     // Max/Min Frames to insert keyframes and to check relocalisation
     mMinFrames = 0;
-    mMaxFrames = fps;
+    mMaxFrames = fps / 2;
 
     cout << endl << "Camera Parameters: " << endl;
     cout << "- fx: " << fx << endl;
